@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/ChrisPytel/tinyapp/issues"
   },
-  "homepage": "https://github.com/ChrisPytel/tinyapp#readme"
+  "homepage": "https://github.com/ChrisPytel/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.3"
+  }
 }
