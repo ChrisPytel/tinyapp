@@ -33,6 +33,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.get("/urls/:id", (req, res) => {
+  res.send("this is the url id"); 
+});
+
+
 app.listen(PORT, () => {
   console.log(`express_server.js listening on port ${PORT}!`);
 });
