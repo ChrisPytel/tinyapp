@@ -1,61 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <!-- head represents our initial starter metadata -->
+ <!-- head represents our initial starter metadata -->
   <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-
-    <!-- from Bootstrap CSS - of the most popular CSS frameworks -->
+    <!-- Bootstrap CSS -->
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
-    />  
-    <title>TinyApp</title> <!-- adds "TinyApp" as the text within our browser tabs -->
+    />
+    <title>URL - TinyApp Example</title>
   </head>
 
 
 
-
-
   <body>
-
-    <header>
-      <%- include('partials/_header') %>
-    </header>
-
-    <main style="margin: 1em;">
-      <h3>My URLs</h3>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Short URL ID</th>
-            <th scope="col">Long URL</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% for (let id in urls) { %>
-            <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-    </main>
+    <div class="card text-center">
+      <div class="card-header"></div>
+      <div class="card-body">
+        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <p class="card-text">
+          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+        </p>
+      </div>
+      <div class="card-footer text-muted"></div>
+    </div>
 
 
 
 
 
 
-
-    <!-- Bootstrap JS, required by the Bootstrap CSS library for some components -->
+    <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

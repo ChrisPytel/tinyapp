@@ -9,7 +9,8 @@ app.set("view engine", "ejs"); //Tells the Express app to use EJS as its templat
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
+  "derf91": "http://www.yahoo.com"
 };
 
 
@@ -24,7 +25,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello, welcome to the landing page for tinyApp!");
+  res.send("Hello, and again, welcome to the TinyApp URL enrichment center.");
 });
 
 
@@ -34,7 +35,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  res.send("this is the url id"); 
+  res.send("this is the url id"); //returns an HTML response
 });
 
 
