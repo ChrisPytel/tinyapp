@@ -58,11 +58,11 @@ app.post("/urls", (req, res) => {
 
 
 app.get("/urls/:id", (req, res) => { 
-  const id = req.params.id;
-  const longURL = urlDatabase[id];  
-  console.log(`Short url is ${id}. Should redirect us to: ${longURL}` );
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];  
+  console.log(`Short url is ${shortURL}. Should redirect us to: ${longURL}` );
 
-  if (!urlDatabase.hasOwnProperty(id)) {
+  if (!urlDatabase.hasOwnProperty(shortURL)) {
     res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
     console.log(`\nURL Found!\nRedirecting you to: ${longURL}`);
