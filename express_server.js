@@ -11,7 +11,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
+  "32xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
   "derf91": "http://www.yahoo.com"
 };
@@ -25,10 +25,11 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>\n"); //returns an HTML response
 });
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { 
   res.send("Hello, and again, welcome to the TinyApp URL enrichment center.");
 });
 
+//--url handlers
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -36,9 +37,8 @@ app.get("/urls", (req, res) => {
 });
 
 
-//must be above the .get method that checks for parameters ids
 app.get("/urls/new", (req, res) => { 
-  res.render("urls_new");
+  res.render("urls_new"); //renders the webpage for urls/new
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -46,23 +46,22 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
-app.post("/urls", (req, res) => {
+app.post("/urls", (req, res) => {  
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  // console.log(`database before adding`, urlDatabase);  
+  urlDatabase[generateRandomString()] = req.body.longURL;
+  // console.log(`database after adding`,urlDatabase);
+  res.send("Successfully added longURL to database!"); 
 });
 
 app.listen(PORT, () => {
   console.log(`express_server.js listening on port ${PORT}!`);
 });
 
-
-// return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-const randomString = Array.from({ length: 6 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-
-function generateRandomString() {
-  // copied from gnerateUID from music library challenge
-  // const randomStringA = Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);   
-  const randomStringB = (Math.random().toString(16).substring(2, 8));  //modified to return a 6 digits/letter string
-  console.log(randomStringB);
-  return randomStringB;
+const generateRandomString = function() {
+  // randomStringA copied from gnerateUID function from music library challenge
+  // const generateUID = Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);   
+  const randomString = (Math.random().toString(16).substring(2,8));  //modified to return a 6 digits/letter string
+  console.log(`Generated a random string ${randomString}`);
+  return randomString;
 };
