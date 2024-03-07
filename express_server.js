@@ -1,5 +1,6 @@
 //express_server.js
 
+const e = require("express");
 const express = require("express");
 const app = express();
 const PORT = 3333;
@@ -17,57 +18,65 @@ const urlDatabase = {
 
 //------------------ url handlers ------------------
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);  //express handles this response and returns a object in JSON format
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>\n"); //returns an HTML response
-});
-
+//home page
 app.get("/", (req, res) => { 
   res.send("Hello, and again, welcome to the TinyApp URL enrichment center.");
 });
 
+//html test page
+app.get("/hello", (req, res) => {
+  res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>\n"); //returns an HTML response
+});
+
+//json data page
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);  //express handles this response and returns a object in JSON format
+});
+
+
 //------------------ url handlers ------------------
 
+//Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+//Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => { 
-  res.render("urls_new"); //renders the webpage for urls/new
+  res.render("urls_new"); 
 });
 
-// app.get("/urls/:id", (req, res) => {
-//   res.send("this is the url id"); 
-// });
-
-
+//After recieving an entry from our Create TinyURL field
 app.post("/urls", (req, res) => {  
   const formBody = req.body;
   const urlID = generateRandomString();
   urlDatabase[urlID] = formBody.longURL;
-  console.log(`database after adding`,urlDatabase);
+  console.log(`Updated urlDatabase is now:\n`, urlDatabase);
   res.redirect(`/urls/${urlID}`);
 });
 
-app.get("/urls/:id", (req, res) => {
-  console.log(`this is the special page`);
+
+app.get("/urls/:id", (req, res) => { 
   const id = req.params.id;
-  const longURL = urlDatabase[id];
-  res.redirect(longURL);
+  const longURL = urlDatabase[id];  
+  console.log(`Short url is ${id}. Should redirect us to: ${longURL}` );
+
+  if (!urlDatabase.hasOwnProperty(id)) {
+    res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
+  } else {
+    console.log(`\nURL Found!\nRedirecting you to: ${longURL}`);
+    res.redirect(longURL);
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`express_server.js listening on port ${PORT}!`);
 });
 
-const generateRandomString = function() {
-  // randomStringA copied from gnerateUID function from music library challenge
-  // const generateUID = Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);   
-  const randomString = (Math.random().toString(16).substring(2,8));  //modified to return a 6 digits/letter string
-  console.log(`Generated a random string ${randomString}`);
+
+const generateRandomString = function() { 
+  const randomString = (Math.random().toString(16).substring(2,8));
+  console.log(`Generated a random ID string: ${randomString}`);
   return randomString;
 };
