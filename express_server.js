@@ -1,4 +1,4 @@
-//express_server.js - Add starter code and 
+//express_server.js
 
 const express = require("express");
 const app = express();
@@ -6,7 +6,6 @@ const PORT = 3333;
 
 //Tells the Express app to use EJS as its templating engine.
 app.set("view engine", "ejs"); 
-
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
 
@@ -16,6 +15,7 @@ const urlDatabase = {
   "derf91": "http://www.yahoo.com"
 };
 
+//------------------ url handlers ------------------
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);  //express handles this response and returns a object in JSON format
@@ -29,29 +29,35 @@ app.get("/", (req, res) => {
   res.send("Hello, and again, welcome to the TinyApp URL enrichment center.");
 });
 
-//--url handlers
+//------------------ url handlers ------------------
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-
 app.get("/urls/new", (req, res) => { 
   res.render("urls_new"); //renders the webpage for urls/new
 });
 
-app.get("/urls/:id", (req, res) => {
-  res.send("this is the url id"); 
-});
+// app.get("/urls/:id", (req, res) => {
+//   res.send("this is the url id"); 
+// });
 
 
 app.post("/urls", (req, res) => {  
-  console.log(req.body); // Log the POST request body to the console
-  // console.log(`database before adding`, urlDatabase);  
-  urlDatabase[generateRandomString()] = req.body.longURL;
-  // console.log(`database after adding`,urlDatabase);
-  res.send("Successfully added longURL to database!"); 
+  const formBody = req.body;
+  const urlID = generateRandomString();
+  urlDatabase[urlID] = formBody.longURL;
+  console.log(`database after adding`,urlDatabase);
+  res.redirect(`/urls/${urlID}`);
+});
+
+app.get("/urls/:id", (req, res) => {
+  console.log(`this is the special page`);
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
