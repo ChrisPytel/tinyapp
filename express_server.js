@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 const urlDatabase = {
   "32xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
-  "derf91": "http://www.yahoo.com"
+  "derf91": "http://www.yahoo.com",
 };
 
 //------------------ url handlers ------------------
@@ -39,11 +39,13 @@ app.get("/urls.json", (req, res) => {
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
+  console.log("Loaded MyURLS page.");
   res.render("urls_index", templateVars);
 });
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => { 
+  console.log("Loaded Create TinyURL page.");
   res.render("urls_new"); 
 });
 
@@ -56,6 +58,16 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${urlID}`);
 });
 
+//After pressing delete on an entry from the MyURLS page
+app.post("/urls/:id/delete", (req, res) => {  
+console.log(`delete url pressed`);
+const idToDelete = req.body.shortID;
+console.log(idToDelete);
+delete urlDatabase[idToDelete];
+console.log(`Updated urlDatabase is now:\n`, urlDatabase);
+const templateVars = { urls: urlDatabase };
+res.render("urls_index", templateVars); 
+});
 
 app.get("/urls/:id", (req, res) => { 
   const shortURL = req.params.id;
