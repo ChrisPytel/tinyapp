@@ -8,7 +8,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-
     <!-- from Bootstrap CSS - of the most popular CSS frameworks -->
     <link
       rel="stylesheet"
@@ -18,7 +17,6 @@
     />  
     <title>TinyApp</title> <!-- adds "TinyApp" as the text within our browser tabs -->
   </head>
-
 
 
 
@@ -36,6 +34,7 @@
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
+            <th scope="col">Edit</th>
             <th scope="col">Delete</th>
           </tr>
         </thead>
@@ -45,7 +44,10 @@
               <td><%= id %></td>
               <td><%= urls[id] %></td>
               <td>
-                <form class="form-inline" action="/urls/:id/delete" method="POST">
+                <a href="/urls/<%= id %>" class="btn btn-outline-primary">Edit</a>
+              </td>
+              <td>
+                <form class="form-inline" action="/urls/<%= id %>/delete" method="POST">
                   <button type="submit" class="btn btn-primary">Delete</button> 
                   <input type="hidden" value= "<%= id %>" name="shortID">             
                 </form>

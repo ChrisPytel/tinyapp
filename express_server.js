@@ -1,6 +1,5 @@
 //express_server.js
 
-const e = require("express");
 const express = require("express");
 const app = express();
 const PORT = 3333;
@@ -16,7 +15,7 @@ const urlDatabase = {
   "derf91": "http://www.yahoo.com",
 };
 
-//------------------ url handlers ------------------
+//------------------ Initial handlers ------------------
 
 //home page
 app.get("/", (req, res) => { 
@@ -33,8 +32,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);  //express handles this response and returns a object in JSON format
 });
 
-
-//------------------ url handlers ------------------
+//------------------ GET routes ------------------
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
@@ -49,31 +47,25 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new"); 
 });
 
-//After recieving an entry from our Create TinyURL field
-app.post("/urls", (req, res) => {  
-  const formBody = req.body;
-  const urlID = generateRandomString();
-  urlDatabase[urlID] = formBody.longURL;
-  console.log(`Updated urlDatabase is now:\n`, urlDatabase);
-  res.redirect(`/urls/${urlID}`);
+
+//Renders the webpage for Edit URLs feature
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id; //gets our id from selected edit button
+  const longURL = urlDatabase[id]; // fetch
+  if (longURL) {
+    console.log("Loaded tinyURL Editor page.");
+    const editTemplateVars = { id: id, longURL: longURL}; //passes our id/url as obj
+    res.render("urls_show", editTemplateVars);
+  } else {
+    res.status(404).send("URL_ID was not located in database");
+  }
 });
 
-//After pressing delete on an entry from the MyURLS page
-app.post("/urls/:id/delete", (req, res) => {  
-console.log(`delete url pressed`);
-const idToDelete = req.body.shortID;
-console.log(idToDelete);
-delete urlDatabase[idToDelete];
-console.log(`Updated urlDatabase is now:\n`, urlDatabase);
-const templateVars = { urls: urlDatabase };
-res.render("urls_index", templateVars); 
-});
-
-app.get("/urls/:id", (req, res) => { 
+//Redirects us to a website if shortID exists and longURL is a valid destination to redirect to
+app.get("/u/:id", (req, res) => { 
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];  
-  console.log(`Short url is ${shortURL}. Should redirect us to: ${longURL}` );
-
+  const longURL = urlDatabase[shortURL];    
+  console.log(`Short url is ${shortURL}.\nShould redirect us to: ${longURL}` );
   if (!urlDatabase.hasOwnProperty(shortURL)) {
     res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
@@ -82,11 +74,49 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`express_server.js listening on port ${PORT}!`);
+
+// ------------------ POST routes ------------------
+
+
+//After recieving an entry from our Create TinyURL field, adds a new URL to database and redirects to the /urls/:id
+app.post("/urls", (req, res) => {  
+  const formBody = req.body;
+  const urlID = generateRandomString();
+  urlDatabase[urlID] = formBody.longURL;
+  console.log(`ADDED NEW URL, urlDatabase is now:\n`, urlDatabase);
+  res.redirect(`/urls/${urlID}`);
 });
 
 
+//After pressing delete on an entry from the MyURLS page, wipes that shortURL from the database and re-renders the MyURLS page
+app.post("/urls/:id/delete", (req, res) => {  
+const idToDelete = req.body.shortID;
+console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
+delete urlDatabase[idToDelete];
+console.log(`Updated urlDatabase is now:\n`, urlDatabase);
+const templateVars = { urls: urlDatabase };
+res.render("urls_index", templateVars); 
+});
+
+//For updating the longURL in our database after pressing Edit button
+app.post("/urls/:id", (req, res) => { 
+  //retrieves our shortURL key from the button name input value
+  const shortURL = Object.keys(req.body); 
+  const updatedURL = req.body[shortURL];
+  console.log(`our key is ${shortURL} and value is ${updatedURL}`);
+  urlDatabase[shortURL] = updatedURL;
+const templateVars = { urls: urlDatabase };
+res.render("urls_index", templateVars); 
+});
+
+
+//Initialize listener for connected client inputs
+app.listen(PORT, () => {
+  console.log(`TinyApp URL Shortener server is LIVE!\nListening on port ${PORT}!`);
+});
+
+
+// ----------------- Helper Functions -----------------
 const generateRandomString = function() { 
   const randomString = (Math.random().toString(16).substring(2,8));
   console.log(`Generated a random ID string: ${randomString}`);
