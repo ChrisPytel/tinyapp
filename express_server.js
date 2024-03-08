@@ -5,7 +5,7 @@ const app = express();
 const PORT = 3333;
 
 //Tells the Express app to use EJS as its templating engine.
-app.set("view engine", "ejs"); 
+app.set("view engine", "ejs");
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
 
@@ -17,9 +17,9 @@ const urlDatabase = {
 
 //------------------ Initial handlers ------------------
 
-//home page
-app.get("/", (req, res) => { 
-  res.send("Hello, and again, welcome to the TinyApp URL enrichment center.");
+//Renders the landing page
+app.get("/", (req, res) => {
+  res.render("urls_home");
 });
 
 //html test page
@@ -42,9 +42,9 @@ app.get("/urls", (req, res) => {
 });
 
 //Renders the webpage for Create New URL
-app.get("/urls/new", (req, res) => { 
+app.get("/urls/new", (req, res) => {
   console.log("Loaded Create TinyURL page.");
-  res.render("urls_new"); 
+  res.render("urls_new");
 });
 
 
@@ -62,11 +62,11 @@ app.get("/urls/:id", (req, res) => {
 });
 
 //Redirects us to a website if shortID exists and longURL is a valid destination to redirect to
-app.get("/u/:id", (req, res) => { 
+app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];    
-  console.log(`Short url is ${shortURL}.\nShould redirect us to: ${longURL}` );
-  if (!urlDatabase.hasOwnProperty(shortURL)) {
+  const longURL = urlDatabase[shortURL];
+  console.log(`Short url is ${shortURL}.\nShould redirect us to: ${longURL}`);
+  if (!urlDatabase[shortURL]) {
     res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
     console.log(`\nURL Found!\nRedirecting you to: ${longURL}`);
@@ -79,7 +79,7 @@ app.get("/u/:id", (req, res) => {
 
 
 //After recieving an entry from our Create TinyURL field, adds a new URL to database and redirects to the /urls/:id
-app.post("/urls", (req, res) => {  
+app.post("/urls", (req, res) => {
   const formBody = req.body;
   const urlID = generateRandomString();
   urlDatabase[urlID] = formBody.longURL;
@@ -89,24 +89,24 @@ app.post("/urls", (req, res) => {
 
 
 //After pressing delete on an entry from the MyURLS page, wipes that shortURL from the database and re-renders the MyURLS page
-app.post("/urls/:id/delete", (req, res) => {  
-const idToDelete = req.body.shortID;
-console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
-delete urlDatabase[idToDelete];
-console.log(`Updated urlDatabase is now:\n`, urlDatabase);
-const templateVars = { urls: urlDatabase };
-res.render("urls_index", templateVars); 
+app.post("/urls/:id/delete", (req, res) => {
+  const idToDelete = req.body.shortID;
+  console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
+  delete urlDatabase[idToDelete];
+  console.log(`Updated urlDatabase is now:\n`, urlDatabase);
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
 });
 
 //For updating the longURL in our database after pressing Edit button
-app.post("/urls/:id", (req, res) => { 
+app.post("/urls/:id", (req, res) => {
   //retrieves our shortURL key from the button name input value
-  const shortURL = Object.keys(req.body); 
+  const shortURL = Object.keys(req.body);
   const updatedURL = req.body[shortURL];
   console.log(`our key is ${shortURL} and value is ${updatedURL}`);
   urlDatabase[shortURL] = updatedURL;
-const templateVars = { urls: urlDatabase };
-res.render("urls_index", templateVars); 
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
 });
 
 
@@ -117,7 +117,7 @@ app.listen(PORT, () => {
 
 
 // ----------------- Helper Functions -----------------
-const generateRandomString = function() { 
+const generateRandomString = function() {
   const randomString = (Math.random().toString(16).substring(2,8));
   console.log(`Generated a random ID string: ${randomString}`);
   return randomString;
