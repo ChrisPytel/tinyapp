@@ -110,6 +110,19 @@ app.post("/urls/:id", (req, res) => {
 });
 
 
+//For creating a cookie during login phase, redirects back to homepage when set
+app.post("/login", (req, res) => {
+const username = req.body.userName;
+  if(!username){
+    res.status(400).send("Invalid username");
+  }
+  else{
+    console.log(`post`, username);
+    res.cookie('username', username).redirect('/urls');
+  }
+});
+
+
 //Initialize listener for connected client inputs
 app.listen(PORT, () => {
   console.log(`TinyApp URL Shortener server is LIVE!\nListening on port ${PORT}!`);
