@@ -22,6 +22,8 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+
+        <% if (!username) { %>
           <form class="form-inline" action="/login" method="POST">
             <div class="form-group">
               <input
@@ -32,7 +34,12 @@
               /> 
             <button type="submit" class="btn btn-primary">Login</button>
           </form>
-
+        <% } %>
+        
+        <% if (username) { %>
+          <a class="nav-item nav-link" href="/">Logged in as <%= username %></a>
+            <button type="submit" class="btn btn-primary">Logout</button>  
+        <% } %>
       </div>
     </div>
 

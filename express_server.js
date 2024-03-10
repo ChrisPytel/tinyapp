@@ -1,11 +1,16 @@
 //express_server.js
 
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 3333;
 
 //Tells the Express app to use EJS as its templating engine.
 app.set("view engine", "ejs");
+
+//Tells the Express app to use cookieParser as its templating engine.
+app.use(cookieParser());
+
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
 
@@ -19,12 +24,17 @@ const urlDatabase = {
 
 //Renders the landing page
 app.get("/", (req, res) => {
-  res.render("urls_home");
+  console.log("Loaded Home page.");
+  console.log('Cookies: ', req.cookies);
+    const templateVars = { 
+    username: req.cookies["username"]  
+  };
+  res.render("urls_home", templateVars);
 });
 
 //html test page
 app.get("/hello", (req, res) => {
-  res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>\n"); //returns an HTML response
+  res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>"); //returns an HTML response
 });
 
 //json data page
@@ -36,15 +46,22 @@ app.get("/urls.json", (req, res) => {
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"]  
+  };
   console.log("Loaded MyURLS page.");
+  console.log('Cookies: ', req.cookies);
   res.render("urls_index", templateVars);
 });
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
+  const templateVars = { 
+    username: req.cookies["username"]  
+  };
   console.log("Loaded Create TinyURL page.");
-  res.render("urls_new");
+  res.render("urls_new", templateVars);
 });
 
 
@@ -65,7 +82,7 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
-  console.log(`Short url is ${shortURL}.\nShould redirect us to: ${longURL}`);
+  // console.log(`\nShort URL is ${shortURL}.\nLong URL is: ${longURL}`);
   if (!urlDatabase[shortURL]) {
     res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
