@@ -95,6 +95,17 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+//Renders the webpage for registering new user
+app.get("/register", (req, res) => {
+  console.log("Loaded Registry page.");
+  const templateVars = {
+    username: req.cookies["username"]
+  };  
+  console.log('Cookies: ', req.cookies);
+  res.render("register", templateVars);
+});
+
+
 
 // ------------------ POST routes ------------------
 
