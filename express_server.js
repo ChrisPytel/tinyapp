@@ -26,8 +26,8 @@ const urlDatabase = {
 app.get("/", (req, res) => {
   console.log("Loaded Home page.");
   console.log('Cookies: ', req.cookies);
-    const templateVars = { 
-    username: req.cookies["username"]  
+  const templateVars = {
+    username: req.cookies["username"]
   };
   res.render("urls_home", templateVars);
 });
@@ -46,9 +46,9 @@ app.get("/urls.json", (req, res) => {
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]  
+    username: req.cookies["username"]
   };
   console.log("Loaded MyURLS page.");
   console.log('Cookies: ', req.cookies);
@@ -57,8 +57,8 @@ app.get("/urls", (req, res) => {
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"]  
+  const templateVars = {
+    username: req.cookies["username"]
   };
   console.log("Loaded Create TinyURL page.");
   res.render("urls_new", templateVars);
@@ -68,11 +68,15 @@ app.get("/urls/new", (req, res) => {
 //Renders the webpage for Edit URLs feature
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //gets our id from selected edit button
-  const longURL = urlDatabase[id]; // fetch
+  const longURL = urlDatabase[id];
   if (longURL) {
     console.log("Loaded tinyURL Editor page.");
-    const editTemplateVars = { id: id, longURL: longURL}; //passes our id/url as obj
-    res.render("urls_show", editTemplateVars);
+    const editTemplateVars = { id: id,
+      longURL: longURL,
+      urls: urlDatabase,
+      username: req.cookies["username"]
+    }; 
+    res.render("urls_show", editTemplateVars); //passes our id/url as obj
   } else {
     res.status(404).send("URL_ID was not located in database");
   }
@@ -111,7 +115,8 @@ app.post("/urls/:id/delete", (req, res) => {
   console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
   delete urlDatabase[idToDelete];
   console.log(`Updated urlDatabase is now:\n`, urlDatabase);
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase,
+  username: req.cookies["username"]};
   res.render("urls_index", templateVars);
 });
 
@@ -129,16 +134,25 @@ app.post("/urls/:id", (req, res) => {
 
 //For creating a cookie during login phase, redirects back to homepage when set
 app.post("/login", (req, res) => {
-const username = req.body.userName;
-  if(!username){
+  console.log(`LOGOUT entered`);
+  const username = req.body.userName;
+  if (!username) {
     res.status(400).send("Invalid username");
-  }
-  else{
+  } else {
     console.log(`post`, username);
     res.cookie('username', username).redirect('/urls');
   }
 });
 
+app.post("/logout", (req, res) => {
+  console.log(`LOGOUT entered`);
+  console.log('Cookies: ', req.cookies);
+  res.clearCookie('username', { path: '/' });
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_home", templateVars);
+});
 
 //Initialize listener for connected client inputs
 app.listen(PORT, () => {
