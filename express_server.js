@@ -14,13 +14,52 @@ app.use(cookieParser());
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
 
+//------------------ Global Variables ------------------
+
 const urlDatabase = {
   "32xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
   "derf91": "http://www.yahoo.com",
 };
 
-//------------------ Initial handlers ------------------
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+// ----------------- Helper Functions -----------------
+
+const generateRandomString = function() {
+  const randomString = (Math.random().toString(16).substring(2,8));
+  console.log(`Generated a random ID string: ${randomString}`);
+  return randomString;
+};
+
+const createNewUser = function(email, password) {
+  const newUserID = generateRandomString();
+  users[newUserID]={
+    id: newUserID,
+    email,
+    password
+  }
+  console.log(`\n\nHeres a list of our updated users: `, users);
+};
+
+//------------------ GET routes ------------------
+
+//json data page
+app.get("/urls.json", (req, res) => {
+  //express handles this response and returns a object in JSON format
+  res.json(urlDatabase);  
+});
 
 //Renders the landing page
 app.get("/", (req, res) => {
@@ -31,18 +70,6 @@ app.get("/", (req, res) => {
   };
   res.render("urls_home", templateVars);
 });
-
-//html test page
-app.get("/hello", (req, res) => {
-  res.send("<html><body>This is me saying <b>HELLO WORLD</b></body></html>"); //returns an HTML response
-});
-
-//json data page
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);  //express handles this response and returns a object in JSON format
-});
-
-//------------------ GET routes ------------------
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
@@ -74,7 +101,8 @@ app.get("/urls/:id", (req, res) => {
     const editTemplateVars = { id: id,
       longURL: longURL,
       urls: urlDatabase,
-      username: req.cookies["username"]
+      username: req.cookies["username"],
+      users
     }; 
     res.render("urls_show", editTemplateVars); //passes our id/url as obj
   } else {
@@ -99,7 +127,8 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   console.log("Loaded Registry page.");
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies["username"],
+    users
   };  
   console.log('Cookies: ', req.cookies);
   res.render("register", templateVars);
@@ -127,7 +156,8 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[idToDelete];
   console.log(`Updated urlDatabase is now:\n`, urlDatabase);
   const templateVars = { urls: urlDatabase,
-  username: req.cookies["username"]};
+  username: req.cookies["username"],
+  users};
   res.render("urls_index", templateVars);
 });
 
@@ -138,7 +168,8 @@ app.post("/urls/:id", (req, res) => {
   const updatedURL = req.body[shortURL];
   console.log(`our key is ${shortURL} and value is ${updatedURL}`);
   urlDatabase[shortURL] = updatedURL;
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase,
+    users };
   res.render("urls_index", templateVars);
 });
 
@@ -150,30 +181,37 @@ app.post("/login", (req, res) => {
   if (!username) {
     res.status(400).send("Invalid username");
   } else {
-    console.log(`post`, username);
+    console.log(`Successful post: `, username);
     res.cookie('username', username).redirect('/urls');
   }
 });
 
+//Logs the current user out of the site and wipes any cookies
 app.post("/logout", (req, res) => {
   console.log(`LOGOUT entered`);
   console.log('Cookies: ', req.cookies);
   res.clearCookie('username', { path: '/' });
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies["username"],
+    users
   };
   res.render("urls_home", templateVars);
+});
+
+//Handles the request for registering new user
+app.post("/register", (req, res) => {
+  console.log("REGISTER entered");
+  const newEmail = req.body.email;
+  const newPassword = req.body.password;
+  createNewUser(newEmail, newPassword);
+  const username = newEmail;
+  const templateVars = {    
+    username: req.cookies["username"],
+    users};
+  res.cookie('username', username).render("urls_home", templateVars);
 });
 
 //Initialize listener for connected client inputs
 app.listen(PORT, () => {
   console.log(`TinyApp URL Shortener server is LIVE!\nListening on port ${PORT}!`);
 });
-
-
-// ----------------- Helper Functions -----------------
-const generateRandomString = function() {
-  const randomString = (Math.random().toString(16).substring(2,8));
-  console.log(`Generated a random ID string: ${randomString}`);
-  return randomString;
-};
