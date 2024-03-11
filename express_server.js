@@ -45,12 +45,23 @@ const generateRandomString = function() {
 
 const createNewUser = function(email, password) {
   const newUserID = generateRandomString();
-  users[newUserID]={
+  users[newUserID] = {
     id: newUserID,
     email,
     password
-  }
+  };
   console.log(`\n\nHeres a list of our updated users: `, users);
+  return newUserID;
+};
+
+const checkIfUserExists = function(newUser) {
+  for (const ID in users) {
+    if (newUser === users[ID].email) {
+      console.log(`${newUser} already exists in our database`);
+      return true;
+    }
+  }
+  return false;
 };
 
 //------------------ GET routes ------------------
@@ -58,7 +69,7 @@ const createNewUser = function(email, password) {
 //json data page
 app.get("/urls.json", (req, res) => {
   //express handles this response and returns a object in JSON format
-  res.json(urlDatabase);  
+  res.json(urlDatabase);
 });
 
 //Renders the landing page
@@ -103,7 +114,7 @@ app.get("/urls/:id", (req, res) => {
       urls: urlDatabase,
       username: req.cookies["username"],
       users
-    }; 
+    };
     res.render("urls_show", editTemplateVars); //passes our id/url as obj
   } else {
     res.status(404).send("URL_ID was not located in database");
@@ -129,7 +140,7 @@ app.get("/register", (req, res) => {
   const templateVars = {
     username: req.cookies["username"],
     users
-  };  
+  };
   console.log('Cookies: ', req.cookies);
   res.render("register", templateVars);
 });
@@ -156,8 +167,8 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[idToDelete];
   console.log(`Updated urlDatabase is now:\n`, urlDatabase);
   const templateVars = { urls: urlDatabase,
-  username: req.cookies["username"],
-  users};
+    username: req.cookies["username"],
+    users};
   res.render("urls_index", templateVars);
 });
 
@@ -188,8 +199,7 @@ app.post("/login", (req, res) => {
 
 //Logs the current user out of the site and wipes any cookies
 app.post("/logout", (req, res) => {
-  console.log(`LOGOUT entered`);
-  console.log('Cookies: ', req.cookies);
+  console.log(`LOGOUT entered\n Cookies are:`, req.cookies);
   res.clearCookie('username', { path: '/' });
   const templateVars = {
     username: req.cookies["username"],
@@ -198,17 +208,36 @@ app.post("/logout", (req, res) => {
   res.render("urls_home", templateVars);
 });
 
+
+/*  ----------------------COME BACK TO THIS LATER --------------
+
+Update all endpoints that pass username value to templates to pass entire user object to template instead and change logic as follows:
+
+    Look up user object in users objects using userid cookie value
+    Pass user object to templates
+    Update _header.ejs to show email instead of username
+
+ ----------------------COME BACK TO THIS LATER --------------  */
+
+
 //Handles the request for registering new user
 app.post("/register", (req, res) => {
   console.log("REGISTER entered");
   const newEmail = req.body.email;
   const newPassword = req.body.password;
-  createNewUser(newEmail, newPassword);
-  const username = newEmail;
-  const templateVars = {    
-    username: req.cookies["username"],
+
+  if (req.body.email === "" || req.body.password === "") {
+    res.status(400).send("E-mail and password cannot be blank");
+  } else if (checkIfUserExists(newEmail)) {
+    res.status(400).send("E-mail already exists in our Database, consider using a different one, or recovering your password.");
+  }
+
+ 
+  const newID = createNewUser(newEmail, newPassword);
+  const templateVars = {
+    username: req.cookies[`userID`],
     users};
-  res.cookie('username', username).render("urls_home", templateVars);
+  res.cookie('userID', newID).render("urls_home", templateVars);
 });
 
 //Initialize listener for connected client inputs
