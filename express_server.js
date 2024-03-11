@@ -54,7 +54,7 @@ const createNewUser = function(email, password) {
   return newUserID;
 };
 
-const checkIfUserExists = function(newUser) {
+const isEmailRegistered = function(newUser) {
   for (const ID in users) {
     if (newUser === users[ID].email) {
       console.log(`${newUser} already exists in our database`);
@@ -145,6 +145,17 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+//Renders the webpage for logging into an account
+app.get("/login", (req, res) => {
+  console.log("Loaded Login page.");
+  const templateVars = {
+    username: req.cookies["username"],
+    users
+  };
+  console.log('Cookies: ', req.cookies);
+  res.render("login", templateVars);
+});
+
 
 
 // ------------------ POST routes ------------------
@@ -211,6 +222,8 @@ app.post("/logout", (req, res) => {
 
 /*  ----------------------COME BACK TO THIS LATER --------------
 
+Registering New Users last requirement
+
 Update all endpoints that pass username value to templates to pass entire user object to template instead and change logic as follows:
 
     Look up user object in users objects using userid cookie value
@@ -221,23 +234,30 @@ Update all endpoints that pass username value to templates to pass entire user o
 
 
 //Handles the request for registering new user
+
 app.post("/register", (req, res) => {
   console.log("REGISTER entered");
   const newEmail = req.body.email;
   const newPassword = req.body.password;
 
-  if (req.body.email === "" || req.body.password === "") {
+  if (req.body.email.trim() === "" || req.body.password.trim() === "") {
     res.status(400).send("E-mail and password cannot be blank");
-  } else if (checkIfUserExists(newEmail)) {
+  } else if (isEmailRegistered(newEmail)) {
     res.status(400).send("E-mail already exists in our Database, consider using a different one, or recovering your password.");
   }
-
- 
+  //uses our helper createNewUser() function to generate a user and returns the unique ID# and stores it as newID
   const newID = createNewUser(newEmail, newPassword);
-  const templateVars = {
-    username: req.cookies[`userID`],
-    users};
-  res.cookie('userID', newID).render("urls_home", templateVars);
+  
+  if (!users[newID]){    
+    res.status(400).send(`Something went wrong, could not create entry for ${newEmail}`);
+  }
+  if (users[newID]){    
+    console.log(`Successful creation in our database, now generating a cookie`);
+    const templateVars = {
+      username: req.cookies[`userID`],
+      users};
+    res.cookie('userID', newID).render("urls_home", templateVars);
+  }
 });
 
 //Initialize listener for connected client inputs

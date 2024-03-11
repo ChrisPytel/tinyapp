@@ -19,7 +19,6 @@
   </head>
 
 
-
   <body>
     <header>
       <%- include('partials/_header') %>
@@ -27,17 +26,19 @@
 
     <main style="margin: 1em;">
       <div class="container">
-        <h3>Register a new TinyApp account </h3>
-        <hr><br>        
-        <form method="POST" action="/register"> 
+        <h3>Login to an existing TinyApp account </h3>
+        <hr><br> 
+        
+        <!-- Form copied from register.ejs -->       
+        <form method="POST" action="/login"> 
           <div>
-              <label for="email"><b>E-mail</b></label>
+              <label for="email"><b>E-mail </b></label>
               <input type="email" id="email" name="email" required>
           </div>  
           <div>
               <label for="password"> <b>Password </b> </label>
               <input type="password" id="password" name="password" required>
-              <button type="submit" class="btn btn-primary">Register</button>
+              <button type="submit" class="btn btn-primary">Login</button>
           </div> 
       </form>
 
