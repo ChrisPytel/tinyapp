@@ -6,14 +6,9 @@
 
     <!-- initializes styles for our clickable buttons in the header navbar -->    
     <button
-      class="navbar-toggler"
-      type="button"
-      data-toggle="collapse"
-      data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+      class="navbar-toggler" type="button"  data-toggle="collapse"
+      data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup"
+      aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -24,15 +19,17 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
 
         <!-- If user cookie isnt stored as a logged in account, display options -->
-        <% if (!username) { %>
+        <% if (!isLoggedIn) { %>
           <a class="nav-item nav-link" href="/login"><b>Login</b></a>
           <a class="nav-item nav-link" href="/register"><b>Register</b></a>
         <% } %>
 
+
+        <!-- REMINDER Update _header.ejs to show email instead of username -->
         <!-- If user cookie isnt stored as a logged in account, display options -->
-        <% if (username) { %>
+        <% if (isLoggedIn) { %>
           <form class="form-inline" action="/logout" method="POST">
-            <a class="nav-item nav-link"><b> Logged in as <%= username %></b></a>
+            <a class="nav-item nav-link"><b> Logged in as <%= isLoggedIn %></b></a>
             <button type="submit" 
             action="/logout" 
             method="POST" 
@@ -41,7 +38,5 @@
         <% } %>
       </div>
     </div>
-
   </nav>
-
 </header>
