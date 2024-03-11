@@ -3,7 +3,7 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
 const app = express();
-const PORT = 3333;
+const PORT = 3333; //ive got something running on 8080
 
 //Tells the Express app to use EJS as its templating engine.
 app.set("view engine", "ejs");
@@ -198,7 +198,7 @@ app.post("/urls/:id", (req, res) => {
 
 //For creating a cookie during login phase, redirects back to homepage when set
 app.post("/login", (req, res) => {
-  console.log(`LOGOUT entered`);
+  console.log(`LOGIN entered`);
   const username = req.body.userName;
   if (!username) {
     res.status(400).send("Invalid username");
@@ -218,6 +218,10 @@ app.post("/logout", (req, res) => {
   };
   res.render("urls_home", templateVars);
 });
+
+
+
+
 
 
 /*  ----------------------COME BACK TO THIS LATER --------------
