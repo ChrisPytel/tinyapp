@@ -1,16 +1,12 @@
-//express_server.js
-
 const express = require("express");
 const cookieParser = require('cookie-parser');
 const app = express();
-const PORT = 3333; //ive got something running on 8080
+const PORT = 3333;
 
 //Tells the Express app to use EJS as its templating engine.
 app.set("view engine", "ejs");
-
 //Tells the Express app to use cookieParser as its templating engine.
 app.use(cookieParser());
-
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,15 +19,15 @@ const urlDatabase = {
 };
 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
+  f63g41: {
+    id: "f63g41",
     email: "user@example.com",
     password: "purple",
   },
-  user2RandomID: {
-    id: "user2RandomID",
+  hy3j9v: {
+    id: "hy3j9v",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "funky",
   },
 };
 
@@ -65,34 +61,40 @@ const isEmailRegistered = function(newUser) {
 };
 
 const checkLoginCredentials = function(loginEmail, loginPassword) {
-  console.log(`loginEmail is: ${loginEmail}\nloginPassword is: ${loginPassword}`);
+  console.log(`Checking email: ${loginEmail}\nAnd Password: ${loginPassword}`);
   for (const ID in users) {
-    console.log(`We've got id: `,ID);
     if (users[ID].email === loginEmail && users[ID].password === loginPassword) {
-      console.log(`${users[ID]} email exists in our database, and password matches`);
-      //returns true and the corresponding ID if login OR password are incorrect
+      //returns true and the corresponding ID if login + password match database
       return {verified: true,
         userID: users[ID].id};
     }
   }
-  console.log(`Account login credentials incorrect`);
-  return {verified: false}; //returns false if login OR password are incorrect
+  //returns false if login OR password are incorrect
+  return {verified: false};
+};
+
+//check if user with that id exists, if so return it
+const getUserByID = function(userID, userDatabase) {
+  for (const ID in userDatabase) {
+    if (userID === ID) {
+      return userDatabase[ID];
+    }
+  }
 };
 
 //------------------ GET routes ------------------
 
-//json data page
+//express handles /urls.json and returns an object in JSON format, our database of links
 app.get("/urls.json", (req, res) => {
-  //express handles this response and returns a object in JSON format
   res.json(urlDatabase);
 });
 
 //Renders the landing page
 app.get("/", (req, res) => {
   console.log("Loaded Home page.");
-  console.log('Cookies: ', req.cookies);
   const templateVars = {
-    isLoggedIn: req.cookies["user_id"]
+    isLoggedIn: req.cookies["user_id"],
+    user: getUserByID(req.cookies["user_id"], users)
   };
   res.render("urls_home", templateVars);
 });
@@ -101,17 +103,18 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    isLoggedIn: req.cookies["user_id"]
+    isLoggedIn: req.cookies["user_id"],
+    user: getUserByID(req.cookies["user_id"], users)
   };
   console.log("Loaded MyURLS page.");
-  console.log('Cookies: ', req.cookies);
   res.render("urls_index", templateVars);
 });
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    isLoggedIn: req.cookies["user_id"]
+    isLoggedIn: req.cookies["user_id"],
+    user: getUserByID(req.cookies["user_id"], users)
   };
   console.log("Loaded Create TinyURL page.");
   res.render("urls_new", templateVars);
@@ -128,7 +131,7 @@ app.get("/urls/:id", (req, res) => {
       isLoggedIn: req.cookies["user_id"],
       longURL: longURL,
       urls: urlDatabase,
-      users
+      user: getUserByID(req.cookies["user_id"], users)
     };
     res.render("urls_show", editTemplateVars); //passes our id/url as obj
   } else {
@@ -140,7 +143,6 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
-  // console.log(`\nShort URL is ${shortURL}.\nLong URL is: ${longURL}`);
   if (!urlDatabase[shortURL]) {
     res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
@@ -154,9 +156,8 @@ app.get("/register", (req, res) => {
   console.log("Loaded Registry page.");
   const templateVars = {
     isLoggedIn: req.cookies["user_id"],
-    users
+    user: getUserByID(req.cookies["user_id"], users)
   };
-  console.log('Cookies: ', req.cookies);
   res.render("register", templateVars);
 });
 
@@ -165,16 +166,13 @@ app.get("/login", (req, res) => {
   console.log("Loaded Login page.");
   const templateVars = {
     isLoggedIn: req.cookies["user_id"],
-    users
+    user: getUserByID(req.cookies["user_id"], users)
   };
-  console.log('Cookies: ', req.cookies);
   res.render("login", templateVars);
 });
 
 
-
 // ------------------ POST routes ------------------
-
 
 //After recieving an entry from our Create TinyURL field, adds a new URL to database and redirects to the /urls/:id
 app.post("/urls", (req, res) => {
@@ -185,17 +183,13 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${urlID}`);
 });
 
-
 //After pressing delete on an entry from the MyURLS page, wipes that shortURL from the database and re-renders the MyURLS page
 app.post("/urls/:id/delete", (req, res) => {
   const idToDelete = req.body.shortID;
   console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
   delete urlDatabase[idToDelete];
   console.log(`Updated urlDatabase is now:\n`, urlDatabase);
-  const templateVars = { urls: urlDatabase,
-    isLoggedIn: req.cookies["user_id"],
-    users};
-  res.render("urls_index", templateVars);
+  res.redirect("/urls");
 });
 
 //For updating the longURL in our database after pressing Edit button
@@ -205,83 +199,54 @@ app.post("/urls/:id", (req, res) => {
   const updatedURL = req.body[shortURL];
   console.log(`our key is ${shortURL} and value is ${updatedURL}`);
   urlDatabase[shortURL] = updatedURL;
-  const templateVars = { 
-    isLoggedIn: req.cookies["user_id"],
-    urls: urlDatabase,
-    users };
-  res.render("urls_index", templateVars);
+  res.redirect("/urls");
 });
-
-
-
-
-/*  ----------------------COME BACK TO THIS LATER --------------
-
-Registering New Users last requirement
-
-Update all endpoints that pass username value to templates to pass entire user object to template instead and change logic as follows:
-
-    Look up user object in users objects using userid cookie value
-    Pass user object to templates
-    Update _header.ejs to show email instead of username
-
- ----------------------COME BACK TO THIS LATER --------------  */
-
-
 
 //For creating a cookie during login phase, redirects back to homepage when set
 app.post("/login", (req, res) => {
-  console.log(`LOGIN entered`);
+  console.log(`LOGIN post route entered`);
   const loginEmail = req.body.email;
   const loginPassword = req.body.password;
 
   //returns status of verification and optional userID value if true
   const verifyLogin = checkLoginCredentials(loginEmail, loginPassword);
-  console.log(verifyLogin);
 
   if (verifyLogin.verified === true) {
     console.log(`Successful login: `, verifyLogin.userID);
     res.cookie('user_id', verifyLogin.userID).redirect('/urls');
   } else if (verifyLogin.verified === false) {
+    console.log(`Successful login`);
     res.status(400).send("Invalid login credentials, please try again.");
   }
 });
 
-//Logs the current user out of the site and wipes any cookies
+//Logs the current user out of the site and wipes any stored cookies
 app.post("/logout", (req, res) => {
-  console.log(`LOGOUT entered\n Cookies are:`, req.cookies);
+  console.log(`LOGOUT post route entered`);
   res.clearCookie('user_id', { path: '/' });
-  const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
-    users
-  };
-  res.render("login", templateVars);
+  res.redirect("/login");
 });
-
 
 //Handles the request for registering a new user
 app.post("/register", (req, res) => {
-  console.log("REGISTER entered");
+  console.log("REGISTER post route entered");
   const newEmail = req.body.email;
   const newPassword = req.body.password;
-
-  if (req.body.email.trim() === "" || req.body.password.trim() === "") {
+ 
+  if (!newEmail || !newPassword) {
     res.status(400).send("E-mail and password cannot be blank");
   } else if (isEmailRegistered(newEmail)) {
     res.status(400).send("E-mail already exists in our Database, try using a different one.");
   }
-  //uses our helper function to generate a user to our database and returns the unique ID# and stores it as newID
+  //uses our helper function to generate a user to our database and returns the unique ID#
   const newID = createNewUser(newEmail, newPassword);
   
+  //checks if succesfully added user to our object
   if (!users[newID]) {
-    res.status(400).send(`Something went wrong, could not create entry for ${newEmail}`);
-  }
-  if (users[newID]) {
-    console.log(`Successful creation in our database, now generating a cookie`);
-    const templateVars = {
-      isLoggedIn: req.cookies[`user_id`],
-      users};
-    res.cookie('user_id', newID).render("urls_home", templateVars);
+    res.status(500).send(`Something went wrong, could not create database entry for ${newEmail}`);
+  } else if (users[newID]) {
+    console.log(`Successful creation in our database, returning to login page`);
+    res.redirect("/");
   }
 });
 

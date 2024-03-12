@@ -24,12 +24,10 @@
           <a class="nav-item nav-link" href="/register"><b>Register</b></a>
         <% } %>
 
-
-        <!-- REMINDER Update _header.ejs to show email instead of username -->
-        <!-- If user cookie isnt stored as a logged in account, display options -->
+        <!-- If user is logged in with a cookie stored, display option for logout -->
         <% if (isLoggedIn) { %>
           <form class="form-inline" action="/logout" method="POST">
-            <a class="nav-item nav-link"><b> Logged in as <%= isLoggedIn %></b></a>
+            <a class="nav-item nav-link"><b> Logged in as <%= user.email %></b></a>
             <button type="submit" 
             action="/logout" 
             method="POST" 
