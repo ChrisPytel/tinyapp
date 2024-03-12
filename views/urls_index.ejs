@@ -15,7 +15,7 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />  
-    <title>TinyApp</title> <!-- adds "TinyApp" as the text within our browser tabs -->
+    <title>TinyApp</title> <!-- adds "TinyApp" as the text in our browser tabs -->
   </head>
 
 
@@ -27,7 +27,17 @@
       <%- include('partials/_header') %>
     </header>
 
-    <main style="margin: 1em;">
+
+  <main style="margin: 1em;">
+    
+    <% if (!isLoggedIn) { %>
+      <h4>User must be logged in to see their URLs</h4>
+      <form action="/login" method="GET">
+        <button type="submit" class="btn btn-primary">Login Here</button>
+      </form>
+    <% } %>
+
+    <% if (isLoggedIn) { %>
       <h3>My URLs</h3>
       <table class="table">
         <thead>
@@ -39,24 +49,26 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
+          <% for (let ID in urls) { %>
             <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
+              <td><%= ID %></td>
+              <td><%= urls[ID].longURL %></td>
               <td>
-                <a href="/urls/<%= id %>" class="btn btn-outline-primary">Edit</a>
+                <a href="/urls/<%= ID %>" class="btn btn-outline-primary">Edit</a>
               </td>
               <td>
-                <form class="form-inline" action="/urls/<%= id %>/delete" method="POST">
+                <form class="form-inline" action="/urls/<%= ID %>/delete" method="POST">
                   <button type="submit" class="btn btn-primary">Delete</button> 
-                  <input type="hidden" value= "<%= id %>" name="shortID">             
+                  <input type="hidden" value= "<%= ID %>" name="shortID">             
                 </form>
               </td>
             </tr>
           <% } %>
         </tbody>
-      </table>
-    </main>
+      </table> 
+    <% } %>
+
+  </main>
 
 
 

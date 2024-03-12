@@ -13,9 +13,9 @@ app.use(express.urlencoded({ extended: true }));
 //------------------ Global Variables ------------------
 
 const urlDatabase = {
-  "32xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-  "derf91": "http://www.yahoo.com",
+  "32xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "f63g41"},
+  "9sm5xK": {longURL: "http://www.google.com", userID: "f63g41"},
+  "derf91": {longURL: "http://www.yahoo.com", userID: "hy3j9v"}
 };
 
 const users = {
@@ -33,12 +33,15 @@ const users = {
 
 // ----------------- Helper Functions -----------------
 
+//Generates a random string for our shortURLS and UserIDs/cookies
 const generateRandomString = function() {
   const randomString = (Math.random().toString(16).substring(2,8));
   console.log(`Generated a random ID string: ${randomString}`);
   return randomString;
 };
 
+
+//Creates a new user after pressing register for a new account
 const createNewUser = function(email, password) {
   const newUserID = generateRandomString();
   users[newUserID] = {
@@ -46,7 +49,7 @@ const createNewUser = function(email, password) {
     email,
     password
   };
-  console.log(`\n\nHeres a list of our updated users: `, users);
+  console.log(`\nHeres a list of our updated users: `, users);
   return newUserID;
 };
 
@@ -69,8 +72,7 @@ const checkLoginCredentials = function(loginEmail, loginPassword) {
         userID: users[ID].id};
     }
   }
-  //returns false if login OR password are incorrect
-  return {verified: false};
+  return {verified: false};  //returns object with false if login OR password are incorrect
 };
 
 //check if user with that id exists, if so return it
@@ -81,6 +83,19 @@ const getUserByID = function(userID, userDatabase) {
     }
   }
 };
+
+//Checks our database if userID corresponds to userID we passed in, returns an object of matching URLS
+const urlsForUser = function(userID, urlDatabase){
+  console.log(`userid is:`, userID);
+  let usersURLs = {};
+  for (const ID in urlDatabase) {    
+    if (urlDatabase[ID].userID === userID) {
+      usersURLs[ID] = urlDatabase[ID];
+    }
+  }
+  console.log(`our compiled URLS object for this user is:`, usersURLs);
+  return usersURLs;
+}
 
 //------------------ GET routes ------------------
 
@@ -101,14 +116,22 @@ app.get("/", (req, res) => {
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    isLoggedIn: req.cookies["user_id"],
-    user: getUserByID(req.cookies["user_id"], users)
-  };
-  console.log("Loaded MyURLS page.");
-  res.render("urls_index", templateVars);
-});
+  const isLoggedIn = req.cookies["user_id"];
+  console.log("id corresponding to cookie is:", isLoggedIn);
+
+  // if (!isLoggedIn){ 
+  //   console.log(`\nUser isnt logged in yet! Cannot display URLS`);
+  //   res.status(403).send("oops"); //Still renders the webpage and provides optional login button
+  // }  else{
+    const templateVars = {
+      // urls: urlDatabase,
+      isLoggedIn: req.cookies["user_id"],
+      user: getUserByID(isLoggedIn, users),
+      urls: urlsForUser(isLoggedIn, urlDatabase)
+    };
+    console.log("Loaded MyURLS page.");
+    res.render("urls_index", templateVars);
+  });
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
@@ -122,7 +145,7 @@ app.get("/urls/new", (req, res) => {
       isLoggedIn,
       user: getUserByID(isLoggedIn, users)
     };
-    console.log("Loaded TinyURL CREATE page.");
+    console.log("Loaded CREATE page.");
     res.render("urls_new", templateVars);
   }
 
@@ -133,17 +156,24 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //gets our id from selected edit button
   const longURL = urlDatabase[id];
-  if (longURL) {
-    console.log("Loaded tinyURL EDITOR page.");
-    const editTemplateVars = { id: id,
-      isLoggedIn: req.cookies["user_id"],
-      longURL: longURL,
-      urls: urlDatabase,
-      user: getUserByID(req.cookies["user_id"], users)
-    };
-    res.render("urls_show", editTemplateVars); //passes our id/url as obj
-  } else {
-    res.status(404).send("URL_ID was not located in database");
+  const isLoggedIn = req.cookies["user_id"];
+
+  if (!isLoggedIn){
+    console.log(`\nUser isnt logged in yet!`);
+    res.status(403).send("Cannot access! User isnt logged in yet!");
+  }  else{    
+    if (longURL) {
+      console.log("Loaded tinyURL EDITOR page.");
+      const editTemplateVars = { id: id,
+        isLoggedIn,
+        longURL: longURL,
+        urls: urlDatabase,
+        user: getUserByID(req.cookies["user_id"], users)
+      };
+      res.render("urls_show", editTemplateVars); //passes our id/url as obj
+    } else {
+      res.status(404).send("URL_ID was not located in database");
+    }
   }
 });
 
