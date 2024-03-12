@@ -112,12 +112,20 @@ app.get("/urls", (req, res) => {
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
-    user: getUserByID(req.cookies["user_id"], users)
-  };
-  console.log("Loaded Create TinyURL page.");
-  res.render("urls_new", templateVars);
+  const isLoggedIn = req.cookies["user_id"];
+
+  if (!isLoggedIn){
+    console.log(`\nUser isnt logged in yet! Redirected to /login`);
+    res.redirect("/login");
+  }  else{
+    const templateVars = {
+      isLoggedIn,
+      user: getUserByID(isLoggedIn, users)
+    };
+    console.log("Loaded TinyURL CREATE page.");
+    res.render("urls_new", templateVars);
+  }
+
 });
 
 
@@ -126,7 +134,7 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //gets our id from selected edit button
   const longURL = urlDatabase[id];
   if (longURL) {
-    console.log("Loaded tinyURL Editor page.");
+    console.log("Loaded tinyURL EDITOR page.");
     const editTemplateVars = { id: id,
       isLoggedIn: req.cookies["user_id"],
       longURL: longURL,
@@ -153,22 +161,38 @@ app.get("/u/:id", (req, res) => {
 
 //Renders the webpage for registering new user
 app.get("/register", (req, res) => {
-  console.log("Loaded Registry page.");
-  const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
-    user: getUserByID(req.cookies["user_id"], users)
-  };
-  res.render("register", templateVars);
+  const isLoggedIn = req.cookies["user_id"];
+  console.log(`Stored cookie:`, isLoggedIn);
+
+  if (isLoggedIn){
+    console.log(`user is already logged in, redirecting to /urls`);
+    res.redirect("/urls");
+  } else{
+    console.log("Loaded Registry page.");
+    const templateVars = {
+      isLoggedIn,
+      user: getUserByID(isLoggedIn, users)
+    };
+    res.render("register", templateVars);
+  }
 });
 
 //Renders the webpage for logging into an account
 app.get("/login", (req, res) => {
-  console.log("Loaded Login page.");
-  const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
-    user: getUserByID(req.cookies["user_id"], users)
-  };
-  res.render("login", templateVars);
+  const isLoggedIn = req.cookies["user_id"];
+  console.log(`Stored cookie:`, isLoggedIn);
+
+  if (isLoggedIn){
+    console.log(`user is already logged in, redirecting to /urls`);
+    res.redirect("/urls");
+  } else{
+    console.log("Loaded Login page.");
+    const templateVars = {
+      isLoggedIn,
+      user: getUserByID(isLoggedIn, users)
+    };
+    res.render("login", templateVars);
+  }
 });
 
 
@@ -176,11 +200,18 @@ app.get("/login", (req, res) => {
 
 //After recieving an entry from our Create TinyURL field, adds a new URL to database and redirects to the /urls/:id
 app.post("/urls", (req, res) => {
-  const formBody = req.body;
-  const urlID = generateRandomString();
-  urlDatabase[urlID] = formBody.longURL;
-  console.log(`ADDED NEW URL, urlDatabase is now:\n`, urlDatabase);
-  res.redirect(`/urls/${urlID}`);
+  const isLoggedIn = req.cookies["user_id"];
+  console.log(`Stored cookie:`, isLoggedIn);
+
+  if (!isLoggedIn){ //additional protection against malicious curl entry
+    res.response(403).send("User must be logged in to be able to shorten URLs!")
+  } else{
+    const formBody = req.body; //stores the submission from Create TinyURL field as formBody
+    const urlID = generateRandomString();
+    urlDatabase[urlID] = formBody.longURL;
+    console.log(`\nADDED NEW URL!\nurlDatabase is now:\n`, urlDatabase);
+    res.redirect(`/urls/${urlID}`);
+  }
 });
 
 //After pressing delete on an entry from the MyURLS page, wipes that shortURL from the database and re-renders the MyURLS page
