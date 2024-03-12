@@ -28,10 +28,7 @@
         <% if (isLoggedIn) { %>
           <form class="form-inline" action="/logout" method="POST">
             <a class="nav-item nav-link"><b> Logged in as <%= user.email %></b></a>
-            <button type="submit" 
-            action="/logout" 
-            method="POST" 
-            class="btn btn-primary">Logout</button> 
+            <button type="submit" class="btn btn-primary">Logout</button> 
           </form> 
         <% } %>
       </div>
