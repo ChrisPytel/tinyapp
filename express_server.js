@@ -9,6 +9,8 @@ app.set("view engine", "ejs");
 app.use(cookieParser());
 //Tells the web server to understand and process information sent from web forms / POST calls
 app.use(express.urlencoded({ extended: true }));
+//Give us access to the hashing tool bycrpyt to secure our passwords/cookies
+const bcrypt = require("bcryptjs");
 
 //------------------ Global Variables ------------------
 
@@ -28,7 +30,7 @@ const users = {
     id: "hy3j9v",
     email: "user2@example.com",
     password: "funky",
-  },
+  }
 };
 
 // ----------------- Helper Functions -----------------
@@ -43,11 +45,17 @@ const generateRandomString = function() {
 
 //Creates a new user after pressing register for a new account
 const createNewUser = function(email, password) {
+  console.log(`Creating a new user with email\n${email}\nand password\n${password}`);
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  console.log(`password after hashing is\n${hashedPassword}`);  
+
   const newUserID = generateRandomString();
+  //creates a new database entry for our new user and enters values
   users[newUserID] = {
     id: newUserID,
     email,
-    password
+    password: hashedPassword
   };
   console.log(`\nHeres a list of our updated users: `, users);
   return newUserID;
@@ -66,9 +74,9 @@ const isEmailRegistered = function(newUser) {
 const checkLoginCredentials = function(loginEmail, loginPassword) {
   console.log(`Checking email: ${loginEmail}\nAnd Password: ${loginPassword}`);
   for (const ID in users) {
-    if (users[ID].email === loginEmail && users[ID].password === loginPassword) {
-      return {verified: true,     //returns true and the corresponding ID
-        userID: users[ID].id};    //if login + password match database
+    if (users[ID].email === loginEmail && bcrypt.compareSync(loginPassword, users[ID].password)) {
+      return {verified: true,    //returns object with a bool and corresponding ID
+        userID: users[ID].id};    
     }
   }
   return {verified: false};  //returns object with false if login/password are incorrect
@@ -155,33 +163,30 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //fetches shortURL ID from selected edit button
 
-  if (!urlDatabase[id]){
+  if (!urlDatabase[id]) {
     return res.status(403).send("We can't redirect you, URL doesnt exist in our database!");
   }
 
   const longURL = urlDatabase[id].longURL; //gets the corresponding longurl from the database
   const isLoggedIn = req.cookies["user_id"];
 
-console.log();
+  console.log();
 
   if (!isLoggedIn) {
     console.log(`\nUser isnt logged in yet!`);
     return res.status(403).send("Cannot access! User isnt logged in yet!");
-  } 
-  
-  else if (isLoggedIn && checkURLOwnership(isLoggedIn, id, urlDatabase) === false) {  //only the user who owns it can view the edit page for this URL
+  } else if (isLoggedIn && checkURLOwnership(isLoggedIn, id, urlDatabase) === false) {  //only the user who owns it can view the edit page for this URL
     console.log("Cant edit this url since we dont own it");
     return res.status(403).send("Cant view this url details since we dont own it");
-  }
-  else if (longURL) {
+  } else if (longURL) {
     console.log("Loaded tinyURL EDITOR page.");
     const editTemplateVars = { isLoggedIn,
-      id,      
+      id,
       longURL,
       urls: urlDatabase,
       user: getUserByID(req.cookies["user_id"], users)
     };
-    res.render("urls_show", editTemplateVars); //passes our id/url as obj
+    res.render("urls_show", editTemplateVars);
   } else {
     return res.status(404).send("URL_ID was not located in database");
   }
@@ -248,9 +253,11 @@ app.post("/urls", (req, res) => {
   if (!isLoggedIn) { //additional protection against malicious curl entry
     return res.response(403).send("User must be logged in to be able to shorten URLs!");
   } else {
-    const formBody = req.body; //stores the submission from Create TinyURL field as formBody
+    const formBody = req.body.longURL; //stores the submission from Create TinyURL field as formBody
     const urlID = generateRandomString();
-    urlDatabase[urlID] = formBody.longURL;
+    urlDatabase[urlID] = { longURL: formBody,
+      userID: isLoggedIn};
+
     console.log(`\nADDED NEW URL!\nurlDatabase is now:\n`, urlDatabase);
     res.redirect(`/urls/${urlID}`);
   }
@@ -263,14 +270,14 @@ app.post("/urls/:id/delete", (req, res) => {
 
   if (!isLoggedIn) { //additional protection against malicious curl entry
     return res.status(401).send("User must be logged in to be able to delete URLs!");
-  } 
+  }
   //only logged in users can delete their own shortURLs
-  else if (isLoggedIn && checkURLOwnership(isLoggedIn, idToDelete, urlDatabase) === false) {  
+  else if (isLoggedIn && checkURLOwnership(isLoggedIn, idToDelete, urlDatabase) === false) {
     console.log("Cant delete this url since we dont own it");
     return res.status(403).send("Cant delete this url since we dont own it");
   }
   //we can edit our URL as we have ownership over it
-  else { 
+  else {
     console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
     delete urlDatabase[idToDelete];
     console.log(`Updated urlDatabase is now:\n`, urlDatabase);
@@ -286,15 +293,15 @@ app.post("/urls/:id", (req, res) => {
   const isLoggedIn = req.cookies["user_id"];
 
   if (!isLoggedIn) { //additional protection against malicious curl entry
-   return res.status(401).send("User must be logged in to be able to delete URLs!");
-  }  
+    return res.status(401).send("User must be logged in to be able to delete URLs!");
+  }
   //only logged in users can delete their own shortURLs
-  else if (isLoggedIn && checkURLOwnership(isLoggedIn, shortURL, urlDatabase) === false) {  
+  else if (isLoggedIn && checkURLOwnership(isLoggedIn, shortURL, urlDatabase) === false) {
     console.log("Cant edit this url since we dont own it");
     return res.status(403).send("Cant edit this url since we dont own it");
-  } 
+  }
   //we can edit our URL as we have ownership over it
-  else { 
+  else {
     console.log(`our key is ${shortURL} and value is ${updatedURL}`);
     urlDatabase[shortURL].longURL = updatedURL;
     res.redirect("/urls");
@@ -311,7 +318,7 @@ app.post("/login", (req, res) => {
   const verifyLogin = checkLoginCredentials(loginEmail, loginPassword);
 
   if (verifyLogin.verified === true) {
-    console.log(`Successful login: `, verifyLogin.userID);
+    console.log(`\nSuccessful login:\nWelcome ${loginEmail}:`, verifyLogin.userID);
     res.cookie('user_id', verifyLogin.userID).redirect('/urls');
   } else if (verifyLogin.verified === false) {
     return res.status(400).send("Invalid login credentials, please try again.");
