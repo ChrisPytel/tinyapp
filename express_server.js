@@ -13,8 +13,7 @@ app.use(express.urlencoded({ extended: true })); //Tells the web server to under
 
 app.use(cookieSession({
   name: 'session',
-  keys: ['superSecretKey'], /* secret keys */
-
+  keys: ['superSecretKey', 'superSecretKey2'], /* secret keys */
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
@@ -44,7 +43,7 @@ const users = {
 
 // ----------------- Helper Functions -----------------
 
-//Generates a random string for our shortURLS and UserIDs/cookies
+//Generates a random string for our shortURLS and UserIDs
 const generateRandomString = function() {
   const randomString = (Math.random().toString(16).substring(2,8));
   console.log(`Generated a random ID string: ${randomString}`);
@@ -60,8 +59,8 @@ const createNewUser = function(email, password) {
   console.log(`password after hashing is\n${hashedPassword}`);  
 
   const newUserID = generateRandomString();
-  //creates a new database entry for our new user and enters values
-  users[newUserID] = {
+
+  users[newUserID] = {  //creates a new database entry for our new user and sets values
     id: newUserID,
     email,
     password: hashedPassword
@@ -102,14 +101,14 @@ const getUserByID = function(userID, userDatabase) {
 
 //Checks our database if userID corresponds to userID we passed in, returns an object of matching URLS
 const urlsForUser = function(userID, urlDatabase) {
-  let usersURLs = {};
+  let urlsForThisUser = {};
   for (const ID in urlDatabase) {
     if (urlDatabase[ID].userID === userID) {
-      usersURLs[ID] = urlDatabase[ID];
+      urlsForThisUser[ID] = urlDatabase[ID];
     }
   }
-  console.log(`\nHelper: urlsForUser compiled a URLS object for this user:`, usersURLs);
-  return usersURLs;
+  console.log(`\nHelper: urlsForUser compiled a URLS object for this user:`, urlsForThisUser);
+  return urlsForThisUser;
 };
 
 const checkURLOwnership = function(userID, shortURL, urlDatabase) {
@@ -199,13 +198,13 @@ app.get("/urls/:id", (req, res) => {
     return res.status(403).send("Cant view this url details since we dont own it");
   } else if (longURL) {
     console.log("Loaded tinyURL EDITOR page.");
-    const editTemplateVars = { isLoggedIn,
+    const templateVars = { isLoggedIn,
       id,
       longURL,
       urls: urlDatabase,
-      user: getUserByID(req.cookies["user_id"], users)
+      user: getUserByID(isLoggedIn, users)
     };
-    res.render("urls_show", editTemplateVars);
+    res.render("urls_show", templateVars);
   } else {
     return res.status(404).send("URL_ID was not located in database");
   }
@@ -387,7 +386,7 @@ app.post("/register", (req, res) => {
   } else if (users[newID]) {
     console.log(`Successful creation in our database, returning to login page`);
 
-    res.cookie('user_id', newID).redirect('/urls'); //old method for cookie creation
+    // res.cookie('user_id', newID).redirect('/urls'); //old method for cookie creation
     // res.cookie('user_id', verifyLogin.userID).redirect('/urls'); 
     req.session.user_id = newID;
     res.redirect('/urls');
