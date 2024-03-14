@@ -1,35 +1,44 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser'); //replaced with cookie-session
+const bcrypt = require("bcryptjs"); //Give us access to the hashing tool bycrpyt to secure our passwords/cookies
+const cookieSession = require('cookie-session');
+
 const app = express();
 const PORT = 3333;
 
-//Tells the Express app to use EJS as its templating engine.
-app.set("view engine", "ejs");
-//Tells the Express app to use cookieParser as its templating engine.
-app.use(cookieParser());
-//Tells the web server to understand and process information sent from web forms / POST calls
-app.use(express.urlencoded({ extended: true }));
-//Give us access to the hashing tool bycrpyt to secure our passwords/cookies
-const bcrypt = require("bcryptjs");
+app.set("view engine", "ejs"); //Tells the Express app to use EJS as its templating engine.
+// app.use(cookieParser()); //Tells the Express app to use cookieParser as its templating engine.
+app.use(express.urlencoded({ extended: true })); //Tells the web server to understand and process information sent from web forms / POST calls
+
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['superSecretKey'], /* secret keys */
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 //------------------ Global Variables ------------------
 
 const urlDatabase = {
-  "32xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "f63g41"},
-  "9sm5xK": {longURL: "http://www.google.com", userID: "f63g41"},
-  "derf91": {longURL: "http://www.yahoo.com", userID: "hy3j9v"}
+  "32xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "test01"},
+  "9sm5xK": {longURL: "http://www.google.com", userID: "test01"},
+  "derf91": {longURL: "http://www.yahoo.com", userID: "test02"}
 };
 
 const users = {
-  f63g41: {
-    id: "f63g41",
+  test01: {
+    id: "test01",
     email: "user@example.com",
-    password: "purple",
+    password: "$2a$10$hUjh46UqaH/BBRFer498/upPfmjTgh/WQOslKZDfkcn9mW8EknFDq", 
+    //plain text password is: purple
   },
-  hy3j9v: {
-    id: "hy3j9v",
+  test02: {
+    id: "test02",
     email: "user2@example.com",
-    password: "funky",
+    password: "$2a$10$D5Tptu29M6ozg8eyOJK1hO5qv4TWo6JHFK0jYUMu21Q7hkdlqdKfy",
+    //plain text password is: funky
   }
 };
 
@@ -118,20 +127,26 @@ app.get("/urls.json", (req, res) => {
 //Renders the landing page
 app.get("/", (req, res) => {
   console.log("Loaded Home page.");
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
+
+
   const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
-    user: getUserByID(req.cookies["user_id"], users)
+    isLoggedIn,
+    user: getUserByID(isLoggedIn, users)
   };
   res.render("urls_home", templateVars);
 });
 
 //Renders the webpage for the list of our URLS
 app.get("/urls", (req, res) => {
-  const isLoggedIn = req.cookies["user_id"];
-  console.log("id corresponding to cookie is:", isLoggedIn);
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
 
   const templateVars = {
-    isLoggedIn: req.cookies["user_id"],
+    isLoggedIn,
     user: getUserByID(isLoggedIn, users),
     urls: urlsForUser(isLoggedIn, urlDatabase)
     // urls: urlDatabase // can enable to test ownership over all urls
@@ -142,7 +157,9 @@ app.get("/urls", (req, res) => {
 
 //Renders the webpage for Create New URL
 app.get("/urls/new", (req, res) => {
-  const isLoggedIn = req.cookies["user_id"];
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
 
   if (!isLoggedIn) {
     console.log(`\nUser isnt logged in yet! Redirected to /login`);
@@ -162,13 +179,15 @@ app.get("/urls/new", (req, res) => {
 //Renders the webpage for Edit URLs feature
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //fetches shortURL ID from selected edit button
-
+  
   if (!urlDatabase[id]) {
     return res.status(403).send("We can't redirect you, URL doesnt exist in our database!");
   }
-
   const longURL = urlDatabase[id].longURL; //gets the corresponding longurl from the database
-  const isLoggedIn = req.cookies["user_id"];
+
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
 
   console.log();
 
@@ -208,7 +227,8 @@ app.get("/u/:id", (req, res) => {
 
 //Renders the webpage for registering new user
 app.get("/register", (req, res) => {
-  const isLoggedIn = req.cookies["user_id"];
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
   console.log(`Stored cookie:`, isLoggedIn);
 
   if (isLoggedIn) {
@@ -226,7 +246,8 @@ app.get("/register", (req, res) => {
 
 //Renders the webpage for logging into an account
 app.get("/login", (req, res) => {
-  const isLoggedIn = req.cookies["user_id"];
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
   console.log(`Stored cookie:`, isLoggedIn);
 
   if (isLoggedIn) {
@@ -247,7 +268,8 @@ app.get("/login", (req, res) => {
 
 //After recieving an entry from our Create TinyURL field, adds a new URL to database and redirects to /urls/:id
 app.post("/urls", (req, res) => {
-  const isLoggedIn = req.cookies["user_id"];
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
   console.log(`Stored cookie:`, isLoggedIn);
 
   if (!isLoggedIn) { //additional protection against malicious curl entry
@@ -266,7 +288,10 @@ app.post("/urls", (req, res) => {
 //After pressing delete on an entry from the MyURLS page, wipes that shortURL from the database and re-renders the MyURLS page
 app.post("/urls/:id/delete", (req, res) => {
   const idToDelete = req.body.shortID;
-  const isLoggedIn = req.cookies["user_id"];
+
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
 
   if (!isLoggedIn) { //additional protection against malicious curl entry
     return res.status(401).send("User must be logged in to be able to delete URLs!");
@@ -290,7 +315,10 @@ app.post("/urls/:id", (req, res) => {
   const shortURL = Object.keys(req.body); //shortURL key comes from the button name input value
   const updatedURL = req.body[shortURL]; //new longURL value comes from the data from text field
   console.log(`updated url is:`, updatedURL);
-  const isLoggedIn = req.cookies["user_id"];
+
+  // const isLoggedIn = req.cookies["user_id"]; //old cookie method
+  const isLoggedIn = req.session.user_id;
+  console.log(`Stored cookie:`, isLoggedIn);
 
   if (!isLoggedIn) { //additional protection against malicious curl entry
     return res.status(401).send("User must be logged in to be able to delete URLs!");
@@ -319,7 +347,11 @@ app.post("/login", (req, res) => {
 
   if (verifyLogin.verified === true) {
     console.log(`\nSuccessful login:\nWelcome ${loginEmail}:`, verifyLogin.userID);
-    res.cookie('user_id', verifyLogin.userID).redirect('/urls');
+
+    // res.cookie('user_id', verifyLogin.userID).redirect('/urls'); //old method for cookie creation
+    req.session.user_id = verifyLogin.userID;
+    res.redirect('/urls');
+    
   } else if (verifyLogin.verified === false) {
     return res.status(400).send("Invalid login credentials, please try again.");
   }
@@ -328,7 +360,10 @@ app.post("/login", (req, res) => {
 //Logs the current user out of the site and wipes any stored cookies
 app.post("/logout", (req, res) => {
   console.log(`LOGOUT post route entered`);
-  res.clearCookie('user_id', { path: '/' });
+
+  // res.clearCookie('user_id', { path: '/' }); //old method for removing cookies
+  req.session = null;
+
   res.redirect("/login");
 });
 
@@ -351,7 +386,12 @@ app.post("/register", (req, res) => {
     return res.status(500).send(`Something went wrong, could not create database entry for ${newEmail}`);
   } else if (users[newID]) {
     console.log(`Successful creation in our database, returning to login page`);
-    res.cookie('user_id', newID).redirect('/urls');
+
+    res.cookie('user_id', newID).redirect('/urls'); //old method for cookie creation
+    // res.cookie('user_id', verifyLogin.userID).redirect('/urls'); 
+    req.session.user_id = newID;
+    res.redirect('/urls');
+
   }
 });
 

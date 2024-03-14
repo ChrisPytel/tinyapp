@@ -17,21 +17,23 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-
-        <!-- If user cookie isnt stored as a logged in account, display options -->
-        <% if (!isLoggedIn) { %>
-          <a class="nav-item nav-link" href="/login"><b>Login</b></a>
-          <a class="nav-item nav-link" href="/register"><b>Register</b></a>
-        <% } %>
-
-        <!-- If user is logged in with a cookie stored, display option for logout -->
-        <% if (isLoggedIn) { %>
-          <form class="form-inline" action="/logout" method="POST">
-            <a class="nav-item nav-link"><b> Logged in as <%= user.email %></b></a>
-            <button type="submit" class="btn btn-primary">Logout</button> 
-          </form> 
-        <% } %>
       </div>
+    </div>
+
+    <% if (!isLoggedIn) { %>    <!-- If user cookie isnt stored as a logged in account, display options -->
+      <div class="navbar-nav">
+        <a class="nav-item nav-link" href="/login"><b>Login</b></a>
+        <a class="nav-item nav-link" href="/register"><b>Register</b></a>
+      </div>
+    <% } else{ %>    <!-- If user is logged in with a cookie stored, display username and button for logout -->
+      <div class="navbar-nav">
+        <form class="form-inline" action="/logout" method="POST">
+          <a class="nav-item nav-link"><b> Logged in as <%= user.email %></b></a>
+          <button type="submit" class="btn btn-primary">Logout</button> 
+        </form> 
+      </div>
+    <% } %>
+      
     </div>
   </nav>
 </header>
