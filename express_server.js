@@ -93,7 +93,7 @@ app.get("/urls/:id", (req, res) => {
     res.render("urls_show", templateVars);
   } else {
     return res.status(404).send("URL_ID was not located in database");
-  }  
+  }
 });
 
 
@@ -199,15 +199,15 @@ app.post("/login", (req, res) => {
   //returns the status of verification and optional userID value if true
   const verifyLogin = helper.checkLoginCredentials(loginEmail, loginPassword);
   if (verifyLogin.verified === true) {
-    req.session.user_id = verifyLogin.userID;
-    res.redirect('/urls');    
+    req.session.user_id = verifyLogin.userID; //eslint wants this to be camel case. I set it to be distinct from userID
+    res.redirect('/urls');
   } else if (verifyLogin.verified === false) {
     return res.status(400).send("Invalid login credentials, please try again.");
   }
 });
 
 //Logs the current user out of the site and wipes any stored cookies
-app.post("/logout", (req, res) => { 
+app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
@@ -225,12 +225,12 @@ app.post("/register", (req, res) => {
   }
 
   //Creates a new user entry in our database and returns the unique ID# for it
-  const newID = helper.createNewUser(newEmail, newPassword);  
+  const newID = helper.createNewUser(newEmail, newPassword);
 
   if (!database.users[newID]) { //checks if succesfully added user to our object
     return res.status(500).send(`Something went wrong, could not create database entry for ${newEmail}`);
   } else if (database.users[newID]) {
-    req.session.user_id = newID;
+    req.session.user_id = newID; //eslint wants this to be camel case. I set it to be distinct from userID
     res.redirect('/urls');
   }
 });
