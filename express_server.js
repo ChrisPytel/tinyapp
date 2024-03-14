@@ -1,16 +1,12 @@
-const express = require("express");
-// const cookieParser = require('cookie-parser'); //replaced with cookie-session
-const bcrypt = require("bcryptjs"); //Give us access to the hashing tool bycrpyt to secure our passwords/cookies
-const cookieSession = require('cookie-session');
 
-const app = express();
 const PORT = 3333;
 
+const express = require("express");
+const app = express();
 app.set("view engine", "ejs"); //Tells the Express app to use EJS as its templating engine.
-// app.use(cookieParser()); //Tells the Express app to use cookieParser as its templating engine.
 app.use(express.urlencoded({ extended: true })); //Tells the web server to understand and process information sent from web forms / POST calls
 
-
+const cookieSession = require('cookie-session'); //replaced cookie-parser with cookie-session
 app.use(cookieSession({
   name: 'session',
   keys: ['superSecretKey', 'superSecretKey2'], /* secret keys */
@@ -18,109 +14,15 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
-//------------------ Global Variables ------------------
-
-const urlDatabase = {
-  "32xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "test01"},
-  "9sm5xK": {longURL: "http://www.google.com", userID: "test01"},
-  "derf91": {longURL: "http://www.yahoo.com", userID: "test02"}
-};
-
-const users = {
-  test01: {
-    id: "test01",
-    email: "user@example.com",
-    password: "$2a$10$hUjh46UqaH/BBRFer498/upPfmjTgh/WQOslKZDfkcn9mW8EknFDq", 
-    //plain text password is: purple
-  },
-  test02: {
-    id: "test02",
-    email: "user2@example.com",
-    password: "$2a$10$D5Tptu29M6ozg8eyOJK1hO5qv4TWo6JHFK0jYUMu21Q7hkdlqdKfy",
-    //plain text password is: funky
-  }
-};
-
-// ----------------- Helper Functions -----------------
-
-//Generates a random string for our shortURLS and UserIDs
-const generateRandomString = function() {
-  const randomString = (Math.random().toString(16).substring(2,8));
-  console.log(`Generated a random ID string: ${randomString}`);
-  return randomString;
-};
-
-
-//Creates a new user after pressing register for a new account
-const createNewUser = function(email, password) {
-  console.log(`Creating a new user with email\n${email}\nand password\n${password}`);
-
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  console.log(`password after hashing is\n${hashedPassword}`);  
-
-  const newUserID = generateRandomString();
-
-  users[newUserID] = {  //creates a new database entry for our new user and sets values
-    id: newUserID,
-    email,
-    password: hashedPassword
-  };
-  console.log(`\nHeres a list of our updated users: `, users);
-  return newUserID;
-};
-
-const isEmailRegistered = function(newUser) {
-  for (const ID in users) {
-    if (newUser === users[ID].email) {
-      console.log(`${newUser} already exists in our database`);
-      return true;
-    }
-  }
-  return false;
-};
-
-const checkLoginCredentials = function(loginEmail, loginPassword) {
-  console.log(`Checking email: ${loginEmail}\nAnd Password: ${loginPassword}`);
-  for (const ID in users) {
-    if (users[ID].email === loginEmail && bcrypt.compareSync(loginPassword, users[ID].password)) {
-      return {verified: true,    //returns object with a bool and corresponding ID
-        userID: users[ID].id};    
-    }
-  }
-  return {verified: false};  //returns object with false if login/password are incorrect
-};
-
-//check if user with that id exists, if so return it
-const getUserByID = function(userID, userDatabase) {
-  for (const ID in userDatabase) {
-    if (userID === ID) {
-      return userDatabase[ID];
-    }
-  }
-};
-
-//Checks our database if userID corresponds to userID we passed in, returns an object of matching URLS
-const urlsForUser = function(userID, urlDatabase) {
-  let urlsForThisUser = {};
-  for (const ID in urlDatabase) {
-    if (urlDatabase[ID].userID === userID) {
-      urlsForThisUser[ID] = urlDatabase[ID];
-    }
-  }
-  console.log(`\nHelper: urlsForUser compiled a URLS object for this user:`, urlsForThisUser);
-  return urlsForThisUser;
-};
-
-const checkURLOwnership = function(userID, shortURL, urlDatabase) {
-  console.log(`Checking if ${userID} can modify this url: ${shortURL}`);
-  return (userID === urlDatabase[shortURL].userID);
-};
+//imports our functions and database to perform actions within express_server.js
+const helper = require('./resources/functions');
+const database = require('./resources/databases');
 
 //------------------ GET routes ------------------
 
 //express handles /urls.json and returns an object in JSON format, our database of links
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  res.json(database.urls);
 });
 
 //Renders the landing page
@@ -130,10 +32,9 @@ app.get("/", (req, res) => {
   const isLoggedIn = req.session.user_id;
   console.log(`Stored cookie:`, isLoggedIn);
 
-
   const templateVars = {
     isLoggedIn,
-    user: getUserByID(isLoggedIn, users)
+    user: helper.getUserByID(isLoggedIn, database.users)
   };
   res.render("urls_home", templateVars);
 });
@@ -146,9 +47,9 @@ app.get("/urls", (req, res) => {
 
   const templateVars = {
     isLoggedIn,
-    user: getUserByID(isLoggedIn, users),
-    urls: urlsForUser(isLoggedIn, urlDatabase)
-    // urls: urlDatabase // can enable to test ownership over all urls
+    user: helper.getUserByID(isLoggedIn, database.users),
+    urls: helper.urlsForUser(isLoggedIn, database.urls)
+    // urls: database.urls // can enable to test ownership over all urls
   };
   console.log("Loaded MyURLS page.");
   res.render("urls_index", templateVars);
@@ -166,7 +67,7 @@ app.get("/urls/new", (req, res) => {
   }  else {
     const templateVars = {
       isLoggedIn,
-      user: getUserByID(isLoggedIn, users)
+      user: helper.getUserByID(isLoggedIn, database.users)
     };
     console.log("Loaded CREATE page.");
     res.render("urls_new", templateVars);
@@ -179,10 +80,10 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id; //fetches shortURL ID from selected edit button
   
-  if (!urlDatabase[id]) {
+  if (!database.urls[id]) {
     return res.status(403).send("We can't redirect you, URL doesnt exist in our database!");
   }
-  const longURL = urlDatabase[id].longURL; //gets the corresponding longurl from the database
+  const longURL = database.urls[id].longURL; //gets the corresponding longurl from the database
 
   // const isLoggedIn = req.cookies["user_id"]; //old cookie method
   const isLoggedIn = req.session.user_id;
@@ -193,7 +94,7 @@ app.get("/urls/:id", (req, res) => {
   if (!isLoggedIn) {
     console.log(`\nUser isnt logged in yet!`);
     return res.status(403).send("Cannot access! User isnt logged in yet!");
-  } else if (isLoggedIn && checkURLOwnership(isLoggedIn, id, urlDatabase) === false) {  //only the user who owns it can view the edit page for this URL
+  } else if (isLoggedIn && helper.checkURLOwnership(isLoggedIn, id, database.urls) === false) {  //only the user who owns it can view the edit page for this URL
     console.log("Cant edit this url since we dont own it");
     return res.status(403).send("Cant view this url details since we dont own it");
   } else if (longURL) {
@@ -201,8 +102,8 @@ app.get("/urls/:id", (req, res) => {
     const templateVars = { isLoggedIn,
       id,
       longURL,
-      urls: urlDatabase,
-      user: getUserByID(isLoggedIn, users)
+      urls: database.urls,
+      user: helper.getUserByID(isLoggedIn, database.users)
     };
     res.render("urls_show", templateVars);
   } else {
@@ -214,9 +115,9 @@ app.get("/urls/:id", (req, res) => {
 //Redirects us to a website if shortID exists and longURL is a valid destination to redirect to
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL].longURL;
+  const longURL = database.urls[shortURL].longURL;
   
-  if (!urlDatabase[shortURL]) {
+  if (!database.urls[shortURL]) {
     return res.status(404).send(`Didnt find a valid URL with that ID to redirect to`);
   } else {
     console.log(`\nURL Found!\nRedirecting you to: ${longURL}`);
@@ -237,7 +138,7 @@ app.get("/register", (req, res) => {
     console.log("Loaded Registry page.");
     const templateVars = {
       isLoggedIn,
-      user: getUserByID(isLoggedIn, users)
+      user: helper.getUserByID(isLoggedIn, database.users)
     };
     res.render("register", templateVars);
   }
@@ -256,7 +157,7 @@ app.get("/login", (req, res) => {
     console.log("Loaded Login page.");
     const templateVars = {
       isLoggedIn,
-      user: getUserByID(isLoggedIn, users)
+      user: helper.getUserByID(isLoggedIn, database.users)
     };
     res.render("login", templateVars);
   }
@@ -275,11 +176,11 @@ app.post("/urls", (req, res) => {
     return res.response(403).send("User must be logged in to be able to shorten URLs!");
   } else {
     const formBody = req.body.longURL; //stores the submission from Create TinyURL field as formBody
-    const urlID = generateRandomString();
-    urlDatabase[urlID] = { longURL: formBody,
+    const urlID = helper.generateRandomString();
+    database.urls[urlID] = { longURL: formBody,
       userID: isLoggedIn};
 
-    console.log(`\nADDED NEW URL!\nurlDatabase is now:\n`, urlDatabase);
+    console.log(`\nADDED NEW URL!\ndatabase.urls is now:\n`, database.urls);
     res.redirect(`/urls/${urlID}`);
   }
 });
@@ -296,15 +197,15 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.status(401).send("User must be logged in to be able to delete URLs!");
   }
   //only logged in users can delete their own shortURLs
-  else if (isLoggedIn && checkURLOwnership(isLoggedIn, idToDelete, urlDatabase) === false) {
+  else if (isLoggedIn && helper.checkURLOwnership(isLoggedIn, idToDelete, database.urls) === false) {
     console.log("Cant delete this url since we dont own it");
     return res.status(403).send("Cant delete this url since we dont own it");
   }
   //we can edit our URL as we have ownership over it
   else {
     console.log(`\nDELETE URL PRESSED, ID we are deleting is:`, idToDelete);
-    delete urlDatabase[idToDelete];
-    console.log(`Updated urlDatabase is now:\n`, urlDatabase);
+    delete database.urls[idToDelete];
+    console.log(`Updated database.urls is now:\n`, database.urls);
     res.redirect("/urls");
   }
 });
@@ -323,14 +224,14 @@ app.post("/urls/:id", (req, res) => {
     return res.status(401).send("User must be logged in to be able to delete URLs!");
   }
   //only logged in users can delete their own shortURLs
-  else if (isLoggedIn && checkURLOwnership(isLoggedIn, shortURL, urlDatabase) === false) {
+  else if (isLoggedIn && helper.checkURLOwnership(isLoggedIn, shortURL, database.urls) === false) {
     console.log("Cant edit this url since we dont own it");
     return res.status(403).send("Cant edit this url since we dont own it");
   }
   //we can edit our URL as we have ownership over it
   else {
     console.log(`our key is ${shortURL} and value is ${updatedURL}`);
-    urlDatabase[shortURL].longURL = updatedURL;
+    database.urls[shortURL].longURL = updatedURL;
     res.redirect("/urls");
   }
 });
@@ -342,7 +243,7 @@ app.post("/login", (req, res) => {
   const loginPassword = req.body.password;
 
   //returns status of verification and optional userID value if true
-  const verifyLogin = checkLoginCredentials(loginEmail, loginPassword);
+  const verifyLogin = helper.checkLoginCredentials(loginEmail, loginPassword);
 
   if (verifyLogin.verified === true) {
     console.log(`\nSuccessful login:\nWelcome ${loginEmail}:`, verifyLogin.userID);
@@ -374,23 +275,22 @@ app.post("/register", (req, res) => {
  
   if (!newEmail || !newPassword) {
     return res.status(400).send("E-mail and password cannot be blank");
-  } else if (isEmailRegistered(newEmail)) {
+  } else if (helper.isEmailRegistered(newEmail)) {
     return res.status(400).send("E-mail already exists in our Database, try using a different one.");
   }
   //uses our helper function to generate a user to our database and returns the unique ID#
-  const newID = createNewUser(newEmail, newPassword);
+  const newID = helper.createNewUser(newEmail, newPassword);
   
   //checks if succesfully added user to our object
-  if (!users[newID]) {
+  if (!database.users[newID]) {
     return res.status(500).send(`Something went wrong, could not create database entry for ${newEmail}`);
-  } else if (users[newID]) {
+  } else if (database.users[newID]) {
     console.log(`Successful creation in our database, returning to login page`);
 
     // res.cookie('user_id', newID).redirect('/urls'); //old method for cookie creation
     // res.cookie('user_id', verifyLogin.userID).redirect('/urls'); 
     req.session.user_id = newID;
     res.redirect('/urls');
-
   }
 });
 
