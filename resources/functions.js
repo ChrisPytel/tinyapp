@@ -1,59 +1,47 @@
 // ----------------- Helper Functions -----------------
 
-//Give us access to the hashing tool bycrpyt to secure our passwords/cookies
-const bcrypt = require("bcryptjs"); 
-
-//imports our database to perform actions with
-const database = require('./databases');
+const bcrypt = require("bcryptjs");  //Give us access to the hashing tool bycrpyt to secure our passwords/cookies
+const database = require('./databases');  //imports our database to perform actions with
 
 //Generates a random string for our shortURLS and UserIDs
 const generateRandomString = function() {
-  const randomString = (Math.random().toString(16).substring(2,8));
-  console.log(`Generated a random ID string: ${randomString}`);
-  return randomString;
+  return (Math.random().toString(16).substring(2,8));
 };
-
 
 //Creates a new user after pressing register for a new account
 const createNewUser = function(email, password) {
-  console.log(`Creating a new user with email\n${email}\nand password\n${password}`);
-
   const hashedPassword = bcrypt.hashSync(password, 10);
-  console.log(`password after hashing is\n${hashedPassword}`);  
-
   const newUserID = generateRandomString();
-
-  database.users[newUserID] = {  //creates a new database entry for our new user and sets values
+  database.users[newUserID] = {  //Creates a new database entry for our new user and defines values
     id: newUserID,
     email,
     password: hashedPassword
   };
-  console.log(`\nHeres a list of our updated database.users: `, database.users);
   return newUserID;
 };
 
+//Checks against the database entry for that given user to see if it exists already
 const isEmailRegistered = function(newUser) {
   for (const ID in database.users) {
     if (newUser === database.users[ID].email) {
-      console.log(`${newUser} already exists in our database`);
       return true;
     }
   }
   return false;
 };
 
+//After pressing login button, POST route calls this to verify login credentials
 const checkLoginCredentials = function(loginEmail, loginPassword) {
-  console.log(`Checking email: ${loginEmail}\nAnd Password: ${loginPassword}`);
   for (const ID in database.users) {
     if (database.users[ID].email === loginEmail && bcrypt.compareSync(loginPassword, database.users[ID].password)) {
       return {verified: true,    //returns object with a bool and corresponding ID
-        userID: database.users[ID].id};    
+        userID: database.users[ID].id};
     }
   }
   return {verified: false};  //returns object with false if login/password are incorrect
 };
 
-//check if user with that id exists, if so return it
+//Check if user with that ID exists, if so return the user object and its values
 const getUserByID = function(userID, userDatabase) {
   for (const ID in userDatabase) {
     if (userID === ID) {
@@ -62,7 +50,7 @@ const getUserByID = function(userID, userDatabase) {
   }
 };
 
-//Checks our database if userID corresponds to userID we passed in, returns an object of matching URLS
+//Checks our database for a userID match. If so, returns an object of matching URLS
 const urlsForUser = function(userID, urlDatabase) {
   let urlsForThisUser = {};
   for (const ID in urlDatabase) {
@@ -70,12 +58,11 @@ const urlsForUser = function(userID, urlDatabase) {
       urlsForThisUser[ID] = urlDatabase[ID];
     }
   }
-  console.log(`\nHelper: urlsForUser compiled a URLS object for this user:`, urlsForThisUser);
   return urlsForThisUser;
 };
 
+//Verifies if a user has access to modifiy/delete a given shortURL
 const checkURLOwnership = function(userID, shortURL, urlDatabase) {
-  console.log(`Checking if ${userID} can modify this url: ${shortURL}`);
   return (userID === urlDatabase[shortURL].userID);
 };
 
@@ -88,4 +75,4 @@ module.exports = {
   getUserByID,
   urlsForUser,
   checkURLOwnership
-}
+};

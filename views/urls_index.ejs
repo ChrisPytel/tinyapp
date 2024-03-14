@@ -18,20 +18,16 @@
     <title>TinyApp</title> <!-- adds "TinyApp" as the text in our browser tabs -->
   </head>
 
-
-
-
+  
   <body>
-
     <header>
       <%- include('partials/_header') %>
     </header>
 
-
   <main style="margin: 1em;">
     
     <% if (!isLoggedIn) { %>
-      <h4>User must be logged in to see their URLs</h4>
+      <h4>User must be logged in to see your URLs</h4>
       <form action="/login" method="GET">
         <button type="submit" class="btn btn-primary">Login Here</button>
       </form>
