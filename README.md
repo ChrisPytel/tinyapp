@@ -37,9 +37,15 @@ Thanks TinyApp you're the best.
 
 ## Final Product
 
-![Landing page](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-01.JPG)
-!["Register Page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-03.JPG)
-!["Login Page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-04.JPG)
-!["List of my shortURLs page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-05.JPG)
-!["Create a new shortURL page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-06.JPG)
+#### Landing page
+![Landing page](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-01.JPG) <br>
+#### Registration Page
+!["Registration Page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-03.JPG) <br>
+#### Login Page
+!["Login Page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-04.JPG) <br>
+#### List of my shortURLs
+!["List of my shortURLs page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-05.JPG) <br>
+#### Create a new shortURL
+!["Create a new shortURL page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-06.JPG) <br>
+#### Edit longURL destination
 !["Edit longURL destination page"](https://github.com/ChrisPytel/tinyapp/blob/master/images/image-07.JPG)
