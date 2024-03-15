@@ -75,13 +75,13 @@ app.get("/urls/:id", (req, res) => {
   
   if (!database.urls[id]) {
     return res.status(404).send("We can't redirect you, URL doesnt exist in our database!");
-  } else if (!isLoggedIn) {
-    return res.status(401).send("Cannot access! User isnt logged in yet!");
-  }
+  } 
   const longURL = database.urls[id].longURL; //gets the corresponding longurl from the database
   const isLoggedIn = req.session.user_id;
-  
-  if (isLoggedIn && helper.checkURLOwnership(isLoggedIn, id, database.urls) === false) {  //only the user who owns it can view the edit page for this URL
+
+   if (!isLoggedIn) {
+    return res.status(401).send("Cannot access! User isnt logged in yet!");
+  }  else if (isLoggedIn && helper.checkURLOwnership(isLoggedIn, id, database.urls) === false) {  //only the user who owns it can view the edit page for this URL
     return res.status(403).send("Cant view this url details since we dont own it");
   } else if (longURL) {
     const templateVars = { isLoggedIn,
